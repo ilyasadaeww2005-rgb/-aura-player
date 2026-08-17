@@ -101,6 +101,17 @@ function splitFilename(name) {
   return { artist: 'Неизвестный исполнитель', title: clean || 'Без названия' };
 }
 
+function inferMediaType(file) {
+  if (file.type) return file.type;
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  const types = {
+    mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav',
+    ogg: 'audio/ogg', flac: 'audio/flac', mp4: 'video/mp4', m4v: 'video/mp4',
+    mov: 'video/quicktime', webm: 'video/webm'
+  };
+  return types[extension] || 'application/octet-stream';
+}
+
 function synchsafe(bytes) {
   return ((bytes[0] & 0x7f) << 21) | ((bytes[1] & 0x7f) << 14) | ((bytes[2] & 0x7f) << 7) | (bytes[3] & 0x7f);
 }
@@ -182,7 +193,7 @@ async function createTrack(file) {
   const fallback = splitFilename(file.name);
   // iOS may expose a picker File backed by a temporary system URL. Copy its
   // bytes into a plain Blob before persisting so IndexedDB owns stable data.
-  const stableBlob = new Blob([await file.arrayBuffer()], { type: file.type || 'audio/mpeg' });
+  const stableBlob = new Blob([await file.arrayBuffer()], { type: inferMediaType(file) });
   const [tags, duration] = await Promise.all([readId3(stableBlob), getDuration(stableBlob)]);
   return {
     id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
@@ -212,13 +223,16 @@ function coverStyle(track) {
 }
 
 async function importFiles(files) {
-  const audioFiles = [...files].filter(file => file.type.startsWith('audio/') || /\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(file.name));
-  if (!audioFiles.length) return showToast('Выбери аудиофайлы');
-  showToast(`Добавляю ${audioFiles.length} ${audioFiles.length === 1 ? 'трек' : 'треков'}…`);
+  const mediaFiles = [...files].filter(file =>
+    file.type.startsWith('audio/') || file.type.startsWith('video/') ||
+    /\.(mp3|m4a|aac|wav|ogg|flac|mp4|mov|m4v|webm)$/i.test(file.name)
+  );
+  if (!mediaFiles.length) return showToast('Выбери аудио или видео');
+  showToast(`Добавляю ${mediaFiles.length} ${mediaFiles.length === 1 ? 'файл' : 'файлов'}…`);
   if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
   let imported = 0;
   let lastError = null;
-  for (const file of audioFiles) {
+  for (const file of mediaFiles) {
     try {
       const track = await createTrack(file);
       await saveTrack(track);
@@ -242,7 +256,7 @@ async function importFiles(files) {
   renderAll();
   if (imported) showToast(`Добавлено: ${imported}`);
   else if (lastError?.name === 'QuotaExceededError') showToast('Не хватает памяти для этого трека');
-  else showToast('Не удалось сохранить файл. Попробуй MP3 из приложения «Файлы»');
+  else showToast('Не удалось сохранить файл. Попробуй MP3, MP4 или MOV');
   fileInput.value = '';
 }
 

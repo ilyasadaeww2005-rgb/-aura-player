@@ -50,7 +50,7 @@
               <div class="cover-orbit"></div>
               <div class="cover-monogram">A</div>
             </div>
-            <span class="quality-badge">LOCAL • LOSSLESS</span>
+            <span class="quality-badge">LOCAL • PRIVATE</span>
           </div>
 
           <div class="track-panel">
@@ -100,7 +100,7 @@
           <div class="empty-state" id="homeEmpty">
             <div class="empty-disc"><span></span></div>
             <h3>Здесь появится твоя музыка</h3>
-            <p>Импортируй MP3, M4A, WAV и другие аудиофайлы. Они останутся только на этом устройстве.</p>
+            <p>Импортируй аудио или видео — AURA воспроизведёт звуковую дорожку. Файлы останутся только на этом устройстве.</p>
             <button class="primary-button" id="addTracksEmpty">ВЫБРАТЬ ТРЕКИ</button>
           </div>
         </section>
@@ -135,7 +135,7 @@
         <div class="empty-state compact-empty" id="libraryEmpty">
           <div class="empty-disc"><span></span></div>
           <h3>Медиатека пуста</h3>
-          <p>Добавь музыку из приложения «Файлы» на iPhone.</p>
+          <p>Добавь аудио или видео из приложений «Файлы» и «Фото» на iPhone.</p>
         </div>
       </section>
 
@@ -200,7 +200,7 @@
           <div class="install-icon">A</div>
           <div><strong>Установи AURA на iPhone</strong><p>Safari → Поделиться → «На экран Домой»</p></div>
         </div>
-        <p class="version">AURA PLAYER • VERSION 1.1</p>
+        <p class="version">AURA PLAYER • VERSION 1.2</p>
       </section>
     </main>
 
@@ -235,7 +235,7 @@
     </nav>
   </div>
 
-  <input type="file" id="fileInput" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.flac" multiple hidden>
+  <input type="file" id="fileInput" accept="audio/*,video/*,.mp3,.m4a,.aac,.wav,.ogg,.flac,.mp4,.mov,.m4v,.webm" multiple hidden>
   <audio id="audio" preload="metadata"></audio>
 
   <dialog class="sheet" id="trackMenu">
