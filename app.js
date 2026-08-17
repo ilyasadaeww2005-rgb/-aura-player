@@ -47,8 +47,12 @@ function dbAction(mode, action) {
     const tx = db.transaction(STORE, mode);
     const store = tx.objectStore(STORE);
     const request = action(store);
-    request.onsuccess = () => resolve(request.result);
+    let result;
+    request.onsuccess = () => { result = request.result; };
     request.onerror = () => reject(request.error);
+    tx.oncomplete = () => resolve(result);
+    tx.onabort = () => reject(tx.error || request.error || new Error('Транзакция хранилища отменена'));
+    tx.onerror = () => reject(tx.error || request.error || new Error('Ошибка локального хранилища'));
   });
 }
 
@@ -176,18 +180,21 @@ function getDuration(file) {
 
 async function createTrack(file) {
   const fallback = splitFilename(file.name);
-  const [tags, duration] = await Promise.all([readId3(file), getDuration(file)]);
+  // iOS may expose a picker File backed by a temporary system URL. Copy its
+  // bytes into a plain Blob before persisting so IndexedDB owns stable data.
+  const stableBlob = new Blob([await file.arrayBuffer()], { type: file.type || 'audio/mpeg' });
+  const [tags, duration] = await Promise.all([readId3(stableBlob), getDuration(stableBlob)]);
   return {
     id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
     title: tags.title || fallback.title,
     artist: tags.artist || fallback.artist,
     album: tags.album || '',
     duration,
-    size: file.size,
-    type: file.type || 'audio/mpeg',
+    size: stableBlob.size,
+    type: stableBlob.type,
     added: Date.now(),
     favorite: false,
-    file,
+    file: stableBlob,
     cover: tags.cover || null
   };
 }
@@ -208,7 +215,9 @@ async function importFiles(files) {
   const audioFiles = [...files].filter(file => file.type.startsWith('audio/') || /\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(file.name));
   if (!audioFiles.length) return showToast('Выбери аудиофайлы');
   showToast(`Добавляю ${audioFiles.length} ${audioFiles.length === 1 ? 'трек' : 'треков'}…`);
+  if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
   let imported = 0;
+  let lastError = null;
   for (const file of audioFiles) {
     try {
       const track = await createTrack(file);
@@ -217,6 +226,7 @@ async function importFiles(files) {
       imported++;
     } catch (error) {
       console.error(error);
+      lastError = error;
       if (error?.name === 'QuotaExceededError') {
         showToast('Не хватает памяти на устройстве');
         break;
@@ -230,7 +240,9 @@ async function importFiles(files) {
     await loadCurrent(false);
   }
   renderAll();
-  showToast(`Добавлено: ${imported}`);
+  if (imported) showToast(`Добавлено: ${imported}`);
+  else if (lastError?.name === 'QuotaExceededError') showToast('Не хватает памяти для этого трека');
+  else showToast('Не удалось сохранить файл. Попробуй MP3 из приложения «Файлы»');
   fileInput.value = '';
 }
 
