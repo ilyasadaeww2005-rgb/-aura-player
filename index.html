@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#08090b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AURA">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="description" content="AURA — твой личный музыкальный плеер. Треки остаются на устройстве.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <title>AURA — Personal Player</title>
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="AURA — главная">
+        <span class="brand-mark"><i></i><i></i><i></i></span>
+        <span>AURA</span>
+      </a>
+      <div class="top-actions">
+        <button class="icon-button" id="searchButton" aria-label="Поиск">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.7"></circle><path d="m16 16 4.2 4.2"></path></svg>
+        </button>
+        <button class="avatar" id="openSettings" aria-label="Настройки">IA</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="view active" id="homeView" aria-labelledby="homeTitle">
+        <div class="eyebrow" id="greeting">ДОБРЫЙ ВЕЧЕР</div>
+        <div class="hero-heading">
+          <h1 id="homeTitle">Твоя музыка.<br><em>Твои правила.</em></h1>
+          <button class="add-button" id="addTracksHero">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+            ДОБАВИТЬ
+          </button>
+        </div>
+
+        <article class="now-card idle" id="nowCard">
+          <div class="now-glow" aria-hidden="true"></div>
+          <div class="cover-wrap">
+            <div class="cover" id="coverArt">
+              <div class="cover-orbit"></div>
+              <div class="cover-monogram">A</div>
+            </div>
+            <span class="quality-badge">LOCAL • LOSSLESS</span>
+          </div>
+
+          <div class="track-panel">
+            <div class="now-label"><span></span> СЕЙЧАС ИГРАЕТ</div>
+            <h2 id="nowTitle">Добавь первый трек</h2>
+            <p id="nowArtist">Музыка с твоего устройства</p>
+
+            <div class="waveform" id="waveform" aria-hidden="true"></div>
+
+            <div class="timeline">
+              <span id="currentTime">0:00</span>
+              <input id="seekBar" type="range" min="0" max="1000" value="0" aria-label="Позиция трека">
+              <span id="duration">0:00</span>
+            </div>
+
+            <div class="transport">
+              <button class="control-button small" id="shuffleButton" aria-label="Перемешать">
+                <svg viewBox="0 0 24 24"><path d="M4 7h3.5c4.5 0 4.5 10 9 10H20M17 4l3 3-3 3M4 17h3.5c1.2 0 2.1-.7 2.9-1.7M14.2 8.8c.7-1 1.5-1.8 2.8-1.8h3M17 14l3 3-3 3"></path></svg>
+              </button>
+              <button class="control-button" id="prevButton" aria-label="Предыдущий трек">
+                <svg viewBox="0 0 24 24"><path d="M6 5v14M19 6l-9 6 9 6V6Z"></path></svg>
+              </button>
+              <button class="play-button" id="playButton" aria-label="Воспроизвести">
+                <svg class="play-icon" viewBox="0 0 24 24"><path d="m9 6 9 6-9 6V6Z"></path></svg>
+                <svg class="pause-icon" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"></path></svg>
+              </button>
+              <button class="control-button" id="nextButton" aria-label="Следующий трек">
+                <svg viewBox="0 0 24 24"><path d="M18 5v14M5 6l9 6-9 6V6Z"></path></svg>
+              </button>
+              <button class="control-button small repeat-button" id="repeatButton" aria-label="Повтор выключен" data-mode="off">
+                <svg viewBox="0 0 24 24"><path d="M17 3l3 3-3 3M20 6H8a4 4 0 0 0-4 4v1M7 21l-3-3 3-3M4 18h12a4 4 0 0 0 4-4v-1"></path></svg>
+                <b>1</b>
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <section class="section-block">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">КОЛЛЕКЦИЯ</span>
+              <h2>Недавно добавленные</h2>
+            </div>
+            <button class="text-button" data-nav="library">СМОТРЕТЬ ВСЕ <span>↗</span></button>
+          </div>
+          <div class="track-list" id="recentTracks"></div>
+          <div class="empty-state" id="homeEmpty">
+            <div class="empty-disc"><span></span></div>
+            <h3>Здесь появится твоя музыка</h3>
+            <p>Импортируй MP3, M4A, WAV и другие аудиофайлы. Они останутся только на этом устройстве.</p>
+            <button class="primary-button" id="addTracksEmpty">ВЫБРАТЬ ТРЕКИ</button>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="libraryView" aria-labelledby="libraryTitle">
+        <div class="library-top">
+          <div>
+            <span class="eyebrow">МОЯ МУЗЫКА</span>
+            <h1 id="libraryTitle">Медиатека <sup id="trackCount">0</sup></h1>
+          </div>
+          <button class="add-button compact" id="addTracksLibrary">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg> ДОБАВИТЬ
+          </button>
+        </div>
+
+        <div class="search-wrap" id="searchWrap">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.7"></circle><path d="m16 16 4.2 4.2"></path></svg>
+          <input type="search" id="searchInput" placeholder="Название или исполнитель" autocomplete="off">
+          <button id="clearSearch" aria-label="Очистить">×</button>
+        </div>
+
+        <div class="filter-row">
+          <div class="segmented" role="tablist">
+            <button class="active" data-filter="all">ВСЕ</button>
+            <button data-filter="favorites">ЛЮБИМЫЕ</button>
+          </div>
+          <button class="sort-button" id="sortButton" data-sort="recent">ПО ДАТЕ ↓</button>
+        </div>
+
+        <div class="track-list full" id="libraryTracks"></div>
+        <div class="empty-state compact-empty" id="libraryEmpty">
+          <div class="empty-disc"><span></span></div>
+          <h3>Медиатека пуста</h3>
+          <p>Добавь музыку из приложения «Файлы» на iPhone.</p>
+        </div>
+      </section>
+
+      <section class="view" id="queueView" aria-labelledby="queueTitle">
+        <span class="eyebrow">ДАЛЬШЕ</span>
+        <div class="library-top queue-heading">
+          <h1 id="queueTitle">Очередь <sup id="queueCount">0</sup></h1>
+          <button class="text-button danger" id="clearQueue">ОЧИСТИТЬ</button>
+        </div>
+        <p class="section-note">Нажми на трек, чтобы перейти к нему. Порядок обновляется автоматически.</p>
+        <div class="track-list full queue-list" id="queueTracks"></div>
+        <div class="empty-state compact-empty" id="queueEmpty">
+          <div class="empty-disc"><span></span></div>
+          <h3>Очередь пуста</h3>
+          <p>Выбери трек в медиатеке — остальные добавятся следом.</p>
+        </div>
+      </section>
+
+      <section class="view" id="settingsView" aria-labelledby="settingsTitle">
+        <span class="eyebrow">ПЕРСОНАЛИЗАЦИЯ</span>
+        <h1 id="settingsTitle">Настройки</h1>
+
+        <div class="settings-group">
+          <h3>АКЦЕНТ</h3>
+          <div class="accent-picker" id="accentPicker">
+            <button class="active" style="--swatch:#d9ff55" data-accent="lime" aria-label="Лайм"></button>
+            <button style="--swatch:#ff775f" data-accent="coral" aria-label="Коралл"></button>
+            <button style="--swatch:#9d8cff" data-accent="violet" aria-label="Фиолетовый"></button>
+            <button style="--swatch:#55dfff" data-accent="cyan" aria-label="Голубой"></button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>ВОСПРОИЗВЕДЕНИЕ</h3>
+          <button class="setting-row" id="sleepTimer">
+            <span class="setting-icon">◷</span>
+            <span><strong>Таймер сна</strong><small id="sleepTimerLabel">Выключен</small></span>
+            <span class="chevron">›</span>
+          </button>
+          <label class="setting-row">
+            <span class="setting-icon">∞</span>
+            <span><strong>Продолжать очередь</strong><small>Автоматически включать следующий трек</small></span>
+            <input class="switch" type="checkbox" id="autoplayToggle" checked>
+          </label>
+        </div>
+
+        <div class="settings-group">
+          <h3>ХРАНИЛИЩЕ</h3>
+          <div class="storage-card">
+            <div class="storage-top"><span>Использовано на устройстве</span><strong id="storageUsed">0 МБ</strong></div>
+            <div class="storage-bar"><span id="storageFill"></span></div>
+            <p>Треки хранятся локально и никуда не загружаются.</p>
+          </div>
+          <button class="setting-row danger-row" id="deleteAll">
+            <span class="setting-icon">×</span>
+            <span><strong>Удалить всю музыку</strong><small>Очистить треки и очередь</small></span>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+
+        <div class="install-card" id="installCard">
+          <div class="install-icon">A</div>
+          <div><strong>Установи AURA на iPhone</strong><p>Safari → Поделиться → «На экран Домой»</p></div>
+        </div>
+        <p class="version">AURA PLAYER • VERSION 1.0</p>
+      </section>
+    </main>
+
+    <div class="mini-player hidden" id="miniPlayer">
+      <button class="mini-main" id="miniOpen">
+        <div class="mini-cover" id="miniCover">A</div>
+        <span><strong id="miniTitle">Без трека</strong><small id="miniArtist">—</small></span>
+      </button>
+      <button class="mini-control" id="miniPlay" aria-label="Воспроизвести">
+        <svg class="play-icon" viewBox="0 0 24 24"><path d="m9 6 9 6-9 6V6Z"></path></svg>
+        <svg class="pause-icon" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"></path></svg>
+      </button>
+      <button class="mini-control" id="miniNext" aria-label="Следующий">
+        <svg viewBox="0 0 24 24"><path d="M18 5v14M5 6l9 6-9 6V6Z"></path></svg>
+      </button>
+      <div class="mini-progress" id="miniProgress"></div>
+    </div>
+
+    <nav class="bottom-nav" aria-label="Основная навигация">
+      <button class="active" data-nav="home">
+        <svg viewBox="0 0 24 24"><path d="M4 11.5 12 5l8 6.5V20h-6v-5h-4v5H4v-8.5Z"></path></svg><span>ГЛАВНАЯ</span>
+      </button>
+      <button data-nav="library">
+        <svg viewBox="0 0 24 24"><path d="M5 4h3v16H5zM11 7h3v13h-3zM17 3h3v17h-3z"></path></svg><span>МЕДИАТЕКА</span>
+      </button>
+      <button data-nav="queue">
+        <svg viewBox="0 0 24 24"><path d="M4 6h12M4 12h12M4 18h8M19 15v6M16 18h6"></path></svg><span>ОЧЕРЕДЬ</span>
+      </button>
+      <button data-nav="settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1A7 7 0 0 0 14.8 6L14.5 3h-5L9.2 6a7 7 0 0 0-1.7 1.1l-2.4-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-1A7 7 0 0 0 9.2 18l.3 3h5l.3-3a7 7 0 0 0 1.7-1.1l2.4 1 2-3.4-2-1.5a7 7 0 0 0 .1-1Z"></path></svg><span>НАСТРОЙКИ</span>
+      </button>
+    </nav>
+  </div>
+
+  <input type="file" id="fileInput" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.flac" multiple hidden>
+  <audio id="audio" preload="metadata"></audio>
+
+  <dialog class="sheet" id="trackMenu">
+    <div class="sheet-handle"></div>
+    <div class="sheet-track">
+      <div class="sheet-cover" id="sheetCover">A</div>
+      <div><strong id="sheetTitle">Трек</strong><span id="sheetArtist">Исполнитель</span></div>
+    </div>
+    <button data-action="favorite"><span>♡</span><b>Добавить в любимые</b></button>
+    <button data-action="play-next"><span>↳</span><b>Играть следующим</b></button>
+    <button data-action="rename"><span>✎</span><b>Изменить название</b></button>
+    <button class="danger" data-action="delete"><span>×</span><b>Удалить с устройства</b></button>
+    <button class="sheet-cancel" data-action="close">ОТМЕНА</button>
+  </dialog>
+
+  <dialog class="sheet timer-sheet" id="timerMenu">
+    <div class="sheet-handle"></div>
+    <h3>ТАЙМЕР СНА</h3>
+    <button data-minutes="15"><b>Через 15 минут</b></button>
+    <button data-minutes="30"><b>Через 30 минут</b></button>
+    <button data-minutes="45"><b>Через 45 минут</b></button>
+    <button data-minutes="60"><b>Через 1 час</b></button>
+    <button data-minutes="0"><b>Выключить таймер</b></button>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
