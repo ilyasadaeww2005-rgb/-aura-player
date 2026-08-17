@@ -34,13 +34,18 @@
 
     <main>
       <section class="view active" id="homeView" aria-labelledby="homeTitle">
-        <div class="eyebrow" id="greeting">ДОБРЫЙ ВЕЧЕР</div>
-        <div class="hero-heading">
-          <h1 id="homeTitle">Твоя музыка.<br><em>Твои правила.</em></h1>
-          <button class="add-button" id="addTracksHero">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
-            ДОБАВИТЬ
-          </button>
+        <div class="screen-heading home-screen-heading">
+          <div>
+            <span class="eyebrow" id="greeting">ДОБРЫЙ ВЕЧЕР</span>
+            <h1 id="homeTitle">Главная</h1>
+          </div>
+          <div class="heading-actions">
+            <span class="aura-pill">AURA <b>2.0</b></span>
+            <button class="add-button" id="addTracksHero">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+              <span>ДОБАВИТЬ</span>
+            </button>
+          </div>
         </div>
 
         <article class="now-card idle" id="nowCard">
@@ -76,6 +81,7 @@
               <button class="play-button" id="playButton" aria-label="Воспроизвести">
                 <svg class="play-icon" viewBox="0 0 24 24"><path d="m9 6 9 6-9 6V6Z"></path></svg>
                 <svg class="pause-icon" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"></path></svg>
+                <span class="play-label">Слушать</span>
               </button>
               <button class="control-button" id="nextButton" aria-label="Следующий трек">
                 <svg viewBox="0 0 24 24"><path d="M18 5v14M5 6l9 6-9 6V6Z"></path></svg>
@@ -87,6 +93,14 @@
             </div>
           </div>
         </article>
+
+        <section class="carousel-section" id="favoritesSection">
+          <div class="section-heading clean-heading">
+            <h2><span class="glow-star">★</span> Твои любимые</h2>
+            <button class="text-button" data-favorites-open>Все</button>
+          </div>
+          <div class="circle-carousel" id="favoriteTracks"></div>
+        </section>
 
         <section class="section-block">
           <div class="section-heading">
@@ -127,6 +141,7 @@
           <div class="segmented" role="tablist">
             <button class="active" data-filter="all">ВСЕ</button>
             <button data-filter="favorites">ЛЮБИМЫЕ</button>
+            <button data-filter="video">ВИДЕО</button>
           </div>
           <button class="sort-button" id="sortButton" data-sort="recent">ПО ДАТЕ ↓</button>
         </div>
@@ -140,9 +155,17 @@
       </section>
 
       <section class="view" id="queueView" aria-labelledby="queueTitle">
-        <span class="eyebrow">ДАЛЬШЕ</span>
         <div class="library-top queue-heading">
-          <h1 id="queueTitle">Очередь <sup id="queueCount">0</sup></h1>
+          <div><span class="eyebrow">ТВОИ ПОДБОРКИ</span><h1 id="queueTitle">Плейлисты</h1></div>
+        </div>
+        <div class="smart-grid">
+          <button class="smart-card favorites-card" data-smart="favorites"><span>★</span><strong>Избранное</strong><small>Любимые треки</small></button>
+          <button class="smart-card recent-card" data-smart="recent"><span>◌</span><strong>Недавние</strong><small>Последние добавления</small></button>
+          <button class="smart-card video-card" data-smart="video"><span>▶</span><strong>Из видео</strong><small>Звуковые дорожки</small></button>
+          <button class="smart-card all-card" data-smart="all"><span>∞</span><strong>Вся музыка</strong><small>Полная медиатека</small></button>
+        </div>
+        <div class="section-heading queue-list-heading">
+          <div><span class="eyebrow">ДАЛЬШЕ</span><h2>Текущая очередь <sup id="queueCount">0</sup></h2></div>
           <button class="text-button danger" id="clearQueue">ОЧИСТИТЬ</button>
         </div>
         <p class="section-note">Нажми на трек, чтобы перейти к нему. Порядок обновляется автоматически.</p>
@@ -200,7 +223,7 @@
           <div class="install-icon">A</div>
           <div><strong>Установи AURA на iPhone</strong><p>Safari → Поделиться → «На экран Домой»</p></div>
         </div>
-        <p class="version">AURA PLAYER • VERSION 1.2</p>
+        <p class="version">AURA PLAYER • VERSION 2.0</p>
       </section>
     </main>
 
@@ -227,16 +250,57 @@
         <svg viewBox="0 0 24 24"><path d="M5 4h3v16H5zM11 7h3v13h-3zM17 3h3v17h-3z"></path></svg><span>МЕДИАТЕКА</span>
       </button>
       <button data-nav="queue">
-        <svg viewBox="0 0 24 24"><path d="M4 6h12M4 12h12M4 18h8M19 15v6M16 18h6"></path></svg><span>ОЧЕРЕДЬ</span>
+        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect></svg><span>ПЛЕЙЛИСТЫ</span>
       </button>
       <button data-nav="settings">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1A7 7 0 0 0 14.8 6L14.5 3h-5L9.2 6a7 7 0 0 0-1.7 1.1l-2.4-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-1A7 7 0 0 0 9.2 18l.3 3h5l.3-3a7 7 0 0 0 1.7-1.1l2.4 1 2-3.4-2-1.5a7 7 0 0 0 .1-1Z"></path></svg><span>НАСТРОЙКИ</span>
       </button>
     </nav>
+    <button class="floating-search" id="floatingSearch" aria-label="Поиск">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.7"></circle><path d="m16 16 4.2 4.2"></path></svg>
+    </button>
   </div>
 
   <input type="file" id="fileInput" accept="audio/*,video/*,.mp3,.m4a,.aac,.wav,.ogg,.flac,.mp4,.mov,.m4v,.webm" multiple hidden>
   <audio id="audio" preload="metadata"></audio>
+
+  <dialog class="full-player" id="fullPlayer">
+    <div class="player-sky" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="full-player-content">
+      <div class="player-topline">
+        <button id="closeFullPlayer" aria-label="Закрыть плеер"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg></button>
+        <span class="ambient-chip"><i></i> AURA FLOW</span>
+        <button id="fullMore" aria-label="Действия с треком">•••</button>
+      </div>
+      <div class="full-track-info">
+        <div class="full-cover" id="fullCover">A</div>
+        <div><h2 id="fullTitle">Без трека</h2><p id="fullArtist">—</p></div>
+        <button class="full-favorite" id="fullFavorite" aria-label="Добавить в любимые">☆</button>
+      </div>
+      <div class="full-transport">
+        <button class="speed-label" id="speedButton">1×</button>
+        <button id="fullPrev" aria-label="Предыдущий"><svg viewBox="0 0 24 24"><path d="M6 5v14M19 6l-9 6 9 6V6Z"></path></svg></button>
+        <button class="full-play" id="fullPlay" aria-label="Воспроизвести">
+          <svg class="play-icon" viewBox="0 0 24 24"><path d="m9 6 9 6-9 6V6Z"></path></svg>
+          <svg class="pause-icon" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"></path></svg>
+        </button>
+        <button id="fullNext" aria-label="Следующий"><svg viewBox="0 0 24 24"><path d="M18 5v14M5 6l9 6-9 6V6Z"></path></svg></button>
+        <button id="fullSleep" aria-label="Таймер сна">☾</button>
+      </div>
+      <div class="full-timeline">
+        <input id="fullSeekBar" type="range" min="0" max="1000" value="0" aria-label="Позиция трека">
+        <div><span id="fullCurrentTime">0:00</span><span id="fullDuration">0:00</span></div>
+      </div>
+      <div class="player-tools">
+        <button id="volumeToggle"><svg viewBox="0 0 24 24"><path d="M5 10v4h4l5 4V6l-5 4H5ZM17 9c1.5 1.5 1.5 4.5 0 6"></path></svg><span>Громкость</span></button>
+        <button id="fullShuffle"><svg viewBox="0 0 24 24"><path d="M4 7h3.5c4.5 0 4.5 10 9 10H20M17 4l3 3-3 3M4 17h3.5c1.2 0 2.1-.7 2.9-1.7M14.2 8.8c.7-1 1.5-1.8 2.8-1.8h3"></path></svg><span>Микс</span></button>
+        <button id="fullQueue"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h11"></path></svg><span>Очередь</span></button>
+      </div>
+      <div class="volume-panel" id="volumePanel">
+        <span>Громкость</span><input id="volumeRange" type="range" min="0" max="100" value="100"><b id="volumeValue">100%</b>
+      </div>
+    </div>
+  </dialog>
 
   <dialog class="sheet" id="trackMenu">
     <div class="sheet-handle"></div>
