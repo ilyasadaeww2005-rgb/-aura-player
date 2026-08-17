@@ -271,7 +271,11 @@ function currentTrack() { return state.tracks.find(track => track.id === state.c
 
 function filteredTracks() {
   const query = state.search.toLocaleLowerCase('ru');
-  let list = state.tracks.filter(track => state.filter === 'all' || track.favorite);
+  let list = state.tracks.filter(track =>
+    state.filter === 'all' ||
+    (state.filter === 'favorites' && track.favorite) ||
+    (state.filter === 'video' && track.type?.startsWith('video/'))
+  );
   if (query) list = list.filter(track => `${track.title} ${track.artist} ${track.album}`.toLocaleLowerCase('ru').includes(query));
   return [...list].sort((a, b) => state.sort === 'title' ? a.title.localeCompare(b.title, 'ru') : b.added - a.added);
 }
@@ -287,11 +291,25 @@ function trackRow(track, index, queue = false) {
   </div>`;
 }
 
+function circleCard(track) {
+  const cover = getCoverUrl(track);
+  return `<button class="circle-track" data-circle-id="${track.id}">
+    <span class="circle-cover" style="${coverStyle(track)}">${cover ? '' : escapeHtml(track.title.charAt(0).toUpperCase())}</span>
+    <strong>${escapeHtml(track.title)}</strong>
+    <small>${escapeHtml(track.artist)}</small>
+  </button>`;
+}
+
 function renderTrackLists() {
   const recent = [...state.tracks].sort((a, b) => b.added - a.added).slice(0, 4);
   $('#recentTracks').innerHTML = recent.map(trackRow).join('');
   $('#homeEmpty').classList.toggle('show', state.tracks.length === 0);
   $('#recentTracks').hidden = state.tracks.length === 0;
+
+  const favorites = state.tracks.filter(track => track.favorite).slice(0, 8);
+  $('#favoriteTracks').innerHTML = favorites.length
+    ? favorites.map(circleCard).join('')
+    : `<button class="circle-track circle-placeholder" data-favorites-empty><span class="circle-cover">☆</span><strong>Добавь любимые</strong><small>Нажми ••• у трека</small></button>`;
 
   const library = filteredTracks();
   $('#libraryTracks').innerHTML = library.map(trackRow).join('');
@@ -308,16 +326,21 @@ function renderTrackLists() {
 function renderPlayer() {
   const track = currentTrack();
   const isPlaying = track && !audio.paused;
+  const fullPlayer = $('#fullPlayer');
   $('#nowCard').classList.toggle('playing', isPlaying);
   $('#miniPlayer').classList.toggle('playing', isPlaying);
   $('#playButton').classList.toggle('playing', isPlaying);
   $('#miniPlay').classList.toggle('playing', isPlaying);
+  fullPlayer.classList.toggle('playing', isPlaying);
+  $('#fullPlay').classList.toggle('playing', isPlaying);
   $('#shuffleButton').classList.toggle('active', state.shuffle);
+  $('#fullShuffle').classList.toggle('active', state.shuffle);
   $('#repeatButton').dataset.mode = state.repeat;
   $('#repeatButton').classList.toggle('active', state.repeat !== 'off');
   $('#repeatButton').setAttribute('aria-label', state.repeat === 'one' ? 'Повтор одного трека' : state.repeat === 'all' ? 'Повтор очереди' : 'Повтор выключен');
   if (!track) {
     $('#miniPlayer').classList.add('hidden');
+    if (fullPlayer.open) fullPlayer.close();
     return;
   }
   $('#nowCard').classList.remove('idle');
@@ -325,9 +348,14 @@ function renderPlayer() {
   $('#nowArtist').textContent = track.album ? `${track.artist} • ${track.album}` : track.artist;
   $('#miniTitle').textContent = track.title;
   $('#miniArtist').textContent = track.artist;
+  $('#fullTitle').textContent = track.title;
+  $('#fullArtist').textContent = track.album ? `${track.artist} • ${track.album}` : track.artist;
+  $('#fullFavorite').textContent = track.favorite ? '★' : '☆';
+  $('#fullFavorite').classList.toggle('active', track.favorite);
+  $('.play-label').textContent = isPlaying ? 'Пауза' : 'Слушать';
   const cover = getCoverUrl(track);
   const [accent, bg] = colorFor(track.id);
-  for (const element of [$('#coverArt'), $('#miniCover')]) {
+  for (const element of [$('#coverArt'), $('#miniCover'), $('#fullCover')]) {
     element.style.backgroundImage = cover ? `url('${cover}')` : '';
     element.style.backgroundColor = cover ? '' : bg;
     element.style.color = accent;
@@ -335,8 +363,10 @@ function renderPlayer() {
   $('.cover-monogram').textContent = cover ? '' : track.title.charAt(0).toUpperCase();
   $('.cover-orbit').style.display = cover ? 'none' : '';
   $('#miniCover').textContent = cover ? '' : track.title.charAt(0).toUpperCase();
-  const activeView = $('.view.active')?.id;
-  $('#miniPlayer').classList.toggle('hidden', activeView === 'homeView');
+  $('#fullCover').textContent = cover ? '' : track.title.charAt(0).toUpperCase();
+  fullPlayer.style.setProperty('--player-accent', accent);
+  fullPlayer.style.setProperty('--player-bg', bg);
+  $('#miniPlayer').classList.toggle('hidden', fullPlayer.open);
 }
 
 function renderStorage() {
@@ -437,8 +467,12 @@ function updateProgress() {
   const progress = duration ? audio.currentTime / duration : 0;
   $('#currentTime').textContent = formatTime(audio.currentTime);
   $('#duration').textContent = formatTime(duration);
+  $('#fullCurrentTime').textContent = formatTime(audio.currentTime);
+  $('#fullDuration').textContent = `-${formatTime(Math.max(0, duration - audio.currentTime))}`;
   $('#seekBar').value = Math.round(progress * 1000);
+  $('#fullSeekBar').value = Math.round(progress * 1000);
   $('#seekBar').style.setProperty('--progress', `${progress * 100}%`);
+  $('#fullSeekBar').style.setProperty('--progress', `${progress * 100}%`);
   $('#miniProgress').style.width = `${progress * 100}%`;
   const bars = $$('#waveform i');
   bars.forEach((bar, index) => bar.classList.toggle('passed', index / bars.length <= progress));
@@ -451,6 +485,30 @@ function navigate(name) {
   $$('.view').forEach(view => view.classList.toggle('active', view.id === `${name}View`));
   $$('.bottom-nav button').forEach(button => button.classList.toggle('active', button.dataset.nav === name));
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  renderPlayer();
+}
+
+function applyFilter(filter) {
+  state.filter = filter;
+  state.sort = 'recent';
+  $('#sortButton').textContent = 'ПО ДАТЕ ↓';
+  $$('.segmented button').forEach(button => button.classList.toggle('active', button.dataset.filter === filter));
+  navigate('library');
+  renderTrackLists();
+}
+
+function openFullPlayer() {
+  if (!currentTrack()) {
+    fileInput.click();
+    return;
+  }
+  if (!$('#fullPlayer').open) $('#fullPlayer').showModal();
+  renderPlayer();
+  updateProgress();
+}
+
+function closeFullPlayer() {
+  if ($('#fullPlayer').open) $('#fullPlayer').close();
   renderPlayer();
 }
 
@@ -542,13 +600,13 @@ function setSleepTimer(minutes) {
 function bindEvents() {
   ['#addTracksHero', '#addTracksEmpty', '#addTracksLibrary'].forEach(selector => $(selector).addEventListener('click', () => fileInput.click()));
   fileInput.addEventListener('change', event => importFiles(event.target.files));
-  ['#playButton', '#miniPlay'].forEach(selector => $(selector).addEventListener('click', togglePlay));
-  ['#nextButton', '#miniNext'].forEach(selector => $(selector).addEventListener('click', () => changeTrack(1)));
-  $('#prevButton').addEventListener('click', () => changeTrack(-1));
-  $('#seekBar').addEventListener('input', event => {
+  ['#playButton', '#miniPlay', '#fullPlay'].forEach(selector => $(selector).addEventListener('click', togglePlay));
+  ['#nextButton', '#miniNext', '#fullNext'].forEach(selector => $(selector).addEventListener('click', () => changeTrack(1)));
+  ['#prevButton', '#fullPrev'].forEach(selector => $(selector).addEventListener('click', () => changeTrack(-1)));
+  ['#seekBar', '#fullSeekBar'].forEach(selector => $(selector).addEventListener('input', event => {
     if (Number.isFinite(audio.duration)) audio.currentTime = audio.duration * Number(event.target.value) / 1000;
-  });
-  $('#shuffleButton').addEventListener('click', () => { state.shuffle = !state.shuffle; renderAll(); showToast(state.shuffle ? 'Перемешивание включено' : 'Перемешивание выключено'); });
+  }));
+  ['#shuffleButton', '#fullShuffle'].forEach(selector => $(selector).addEventListener('click', () => { state.shuffle = !state.shuffle; renderAll(); showToast(state.shuffle ? 'Перемешивание включено' : 'Перемешивание выключено'); }));
   $('#repeatButton').addEventListener('click', () => {
     state.repeat = state.repeat === 'off' ? 'all' : state.repeat === 'all' ? 'one' : 'off';
     renderAll();
@@ -575,14 +633,14 @@ function bindEvents() {
     if (name) navigate(name);
   }));
   $('#openSettings').addEventListener('click', () => navigate('settings'));
-  $('#miniOpen').addEventListener('click', () => navigate('home'));
-  $('#searchButton').addEventListener('click', () => { navigate('library'); setTimeout(() => $('#searchInput').focus(), 250); });
+  $('#miniOpen').addEventListener('click', openFullPlayer);
+  $('#coverArt').addEventListener('click', openFullPlayer);
+  $('#nowTitle').addEventListener('click', openFullPlayer);
+  ['#searchButton', '#floatingSearch'].forEach(selector => $(selector).addEventListener('click', () => { navigate('library'); setTimeout(() => $('#searchInput').focus(), 250); }));
   $('#searchInput').addEventListener('input', event => { state.search = event.target.value; renderTrackLists(); });
   $('#clearSearch').addEventListener('click', () => { $('#searchInput').value = ''; state.search = ''; renderTrackLists(); });
   $$('.segmented button').forEach(button => button.addEventListener('click', () => {
-    state.filter = button.dataset.filter;
-    $$('.segmented button').forEach(item => item.classList.toggle('active', item === button));
-    renderTrackLists();
+    applyFilter(button.dataset.filter);
   }));
   $('#sortButton').addEventListener('click', event => {
     state.sort = state.sort === 'recent' ? 'title' : 'recent';
@@ -595,6 +653,13 @@ function bindEvents() {
     const row = event.target.closest('.track-row');
     if (row) playTrack(row.dataset.id, !selector.includes('queue'));
   }));
+  $('#favoriteTracks').addEventListener('click', event => {
+    const track = event.target.closest('[data-circle-id]');
+    if (track) playTrack(track.dataset.circleId);
+    else if (event.target.closest('[data-favorites-empty]')) applyFilter('all');
+  });
+  $$('[data-favorites-open]').forEach(button => button.addEventListener('click', () => applyFilter('favorites')));
+  $$('[data-smart]').forEach(button => button.addEventListener('click', () => applyFilter(button.dataset.smart === 'recent' ? 'all' : button.dataset.smart)));
   $('#trackMenu').addEventListener('click', event => {
     const action = event.target.closest('[data-action]')?.dataset.action;
     if (action) handleTrackAction(action);
@@ -608,6 +673,36 @@ function bindEvents() {
     if (name) setAccent(name);
   });
   $('#sleepTimer').addEventListener('click', () => $('#timerMenu').showModal());
+  $('#closeFullPlayer').addEventListener('click', closeFullPlayer);
+  $('#fullPlayer').addEventListener('close', renderPlayer);
+  $('#fullFavorite').addEventListener('click', async () => {
+    const track = currentTrack();
+    if (!track) return;
+    track.favorite = !track.favorite;
+    await saveTrack(track);
+    renderAll();
+    showToast(track.favorite ? 'Добавлено в любимые' : 'Убрано из любимых');
+  });
+  $('#fullQueue').addEventListener('click', () => { closeFullPlayer(); navigate('queue'); });
+  $('#fullSleep').addEventListener('click', () => { closeFullPlayer(); setTimeout(() => $('#timerMenu').showModal(), 120); });
+  $('#fullMore').addEventListener('click', () => {
+    const track = currentTrack();
+    if (!track) return;
+    closeFullPlayer();
+    setTimeout(() => openTrackMenu(track.id), 120);
+  });
+  $('#volumeToggle').addEventListener('click', () => $('#volumePanel').classList.toggle('open'));
+  $('#volumeRange').addEventListener('input', event => {
+    audio.volume = Number(event.target.value) / 100;
+    $('#volumeValue').textContent = `${event.target.value}%`;
+    localStorage.setItem('aura-volume', event.target.value);
+  });
+  $('#speedButton').addEventListener('click', event => {
+    const speeds = [1, 1.25, 1.5, 2];
+    audio.playbackRate = speeds[(speeds.indexOf(audio.playbackRate) + 1) % speeds.length];
+    event.currentTarget.textContent = `${audio.playbackRate}×`;
+    updateProgress();
+  });
   $('#timerMenu').addEventListener('click', event => {
     const minutes = event.target.closest('[data-minutes]')?.dataset.minutes;
     if (minutes !== undefined) setSleepTimer(Number(minutes));
@@ -647,7 +742,11 @@ async function init() {
   setupWaveform();
   bindEvents();
   setupMediaActions();
-  setAccent(localStorage.getItem('aura-accent') || 'lime');
+  setAccent(localStorage.getItem('aura-accent') || 'violet');
+  const savedVolume = Math.min(100, Math.max(0, Number(localStorage.getItem('aura-volume') ?? 100)));
+  audio.volume = savedVolume / 100;
+  $('#volumeRange').value = savedVolume;
+  $('#volumeValue').textContent = `${savedVolume}%`;
   $('#greeting').textContent = new Date().getHours() < 6 ? 'ДОБРОЙ НОЧИ' : new Date().getHours() < 12 ? 'ДОБРОЕ УТРО' : new Date().getHours() < 18 ? 'ДОБРЫЙ ДЕНЬ' : 'ДОБРЫЙ ВЕЧЕР';
   try {
     db = await openDatabase();
